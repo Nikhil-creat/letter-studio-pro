@@ -1,0 +1,11 @@
+{
+  "name": "Letter Studio Pro",
+  "short_name": "Letter Studio",
+  "description": "Agentic letter writer with retrieval, self-review and export.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

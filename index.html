@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Letter Studio Pro: agentic letter writer</title>
+<meta name="description" content="A multi-agent letter generator with retrieval, self-review, live preview and export. Runs in your browser.">
+<meta name="theme-color" content="#0b1020">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="6" width="28" height="20" rx="4" fill="none" stroke="#5b7cff" stroke-width="2.4"/><path d="M4 9l12 9 12-9" fill="none" stroke="#37e6b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Letter Studio Pro <small>agentic</small></span>
+  </div>
+  <span class="spacer"></span>
+  <span class="engine" id="engineChip">Offline agents</span>
+  <button class="groqbtn" id="btnGroq" title="Add a free Groq API key"><span class="gdot" id="gdot"></span>Add Groq key</button>
+  <button class="icon" id="btnPalette" title="Command palette (Ctrl+K)" aria-label="Command palette">&#8984;</button>
+  <button class="icon" id="btnTheme" title="Switch theme" aria-label="Switch theme">&#9680;</button>
+  <button class="icon" id="btnSettings" title="Settings and AI key" aria-label="Settings">&#9881;</button>
+</header>
+<nav class="pills" aria-label="Sections">
+  <a href="#cmd">Request</a><a href="#blockA">Parameters</a><a href="#trace">Agents</a><a href="#blockB">Preview</a><a href="#blockC">Output</a><a href="#quality">Quality</a><a href="#lab">Tone lab</a><a href="#kb">Knowledge</a><a href="#drafts">Drafts</a>
+</nav>
+
+<main>
+  <div class="col left">
+    <section class="panel" id="cmd">
+      <h2>Tell the agents what you need</h2>
+      <p class="lead">Describe the letter in plain words. Agents pick the type, pull the right conventions and fill in what they can.</p>
+      <textarea id="prompt" placeholder="Example: Resign from my job at Acme Corp and give two weeks notice to Dr. Rao" aria-label="Describe your letter"></textarea>
+      <div class="bar">
+        <button class="btn" id="btnRun">Run agents</button>
+        <button class="sec" id="btnMic" title="Dictate">Dictate</button>
+        <button class="sec" id="btnGroq2">Free Groq key</button>
+        <label class="check"><input type="checkbox" id="autoType" checked> Let agents choose the type</label>
+      </div>
+      <label for="engine">Drafting engine</label>
+      <select id="engine">
+        <option value="auto">Built-in templates (instant, updates as you type)</option>
+        <option value="llm">AI model (your own API key, press Run agents)</option>
+      </select>
+      <div class="hint" id="hint">Fields changed after the AI draft. Press Run agents to redraft, or keep editing to keep this draft.</div>
+    </section>
+
+    <section class="panel" id="blockA">
+      <h2>Block A: Parameters</h2>
+      <p class="lead">Everything here updates the preview.</p>
+      <label for="sub">Letter category and type</label>
+      <select id="sub"></select>
+
+      <div class="love" id="lovePanel" hidden>
+        <div class="lovehead">Lovable words</div>
+        <p class="lead" style="margin:2px 0 8px">Tap the feelings you want in your letter. Add your own details below to make it truly yours.</p>
+        <div class="lovechips" id="loveChips"></div>
+        <div class="row">
+          <div><label for="nick">Pet name</label><input id="nick" list="nicks" placeholder="e.g. sweetheart"><datalist id="nicks"></datalist></div>
+          <div><label for="intensity">Feeling</label><select id="intensity"><option value="1">Sweet and gentle</option><option value="2" selected>Warm and heartfelt</option><option value="3">Deep and passionate</option></select></div>
+        </div>
+        <label for="ilyLang">Say "I love you" in another language</label>
+        <select id="ilyLang"></select>
+        <input type="hidden" id="loveWords"><input type="hidden" id="ily">
+      </div>
+      <div class="row">
+        <div><label for="tone">Tone and persona</label><select id="tone"></select></div>
+        <div><label for="layout">Layout</label><select id="layout"><option value="full">Full block</option><option value="mod">Modified block</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="lh">Letterhead style</label><select id="lh"><option value="classic">Classic</option><option value="modern">Modern</option><option value="minimal">Minimal</option><option value="exec">Executive</option><option value="rose">Rose (love letters)</option></select></div>
+        <div><label for="font">Font</label><select id="font"><option value="auto">Auto by type</option><option>Times New Roman</option><option>Garamond</option><option>Calibri</option><option>Arial</option><option>Georgia</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="close">Sign-off</label><select id="close"></select></div>
+        <div><label for="sig">Signature</label><select id="sig"><option value="typed">Typed</option><option value="script">Script</option></select></div>
+      </div>
+
+      <label for="sName">Your name</label><input id="sName" autocomplete="name" placeholder="Full name">
+      <div class="row">
+        <div><label for="sTitle">Your title</label><input id="sTitle" placeholder="e.g. Software Engineer"></div>
+        <div><label for="sContact">Email or phone</label><input id="sContact" autocomplete="email" placeholder="you@example.com"></div>
+      </div>
+      <label for="sAddr">Your address</label><textarea id="sAddr" rows="2" placeholder="Street&#10;City, postcode"></textarea>
+
+      <label for="rName">Recipient (title and name)</label><input id="rName" placeholder="e.g. Dr. Anita Rao. Leave blank for Sir or Madam">
+      <label for="rOrg">Recipient organization or role</label><input id="rOrg" placeholder="e.g. Hiring Manager, Acme Corp">
+      <label for="rAddr">Recipient address</label><textarea id="rAddr" rows="2"></textarea>
+
+      <label for="subj">Subject or reference line</label><input id="subj" placeholder="Blank uses a suggested subject">
+      <label for="date">Date</label><input id="date">
+      <label for="details">Key details and special conditions</label>
+      <textarea id="details" rows="4" placeholder="The core message in your own words. It becomes the body of the letter."></textarea>
+
+      <details class="fold" open>
+        <summary>Post-words</summary>
+        <label for="encl">Enclosures</label><input id="encl" placeholder="e.g. Resume; Certificates">
+        <label for="cc">Carbon copies (CC)</label><input id="cc" placeholder="e.g. HR Department">
+        <label for="ps">Postscript (P.S.)</label><input id="ps" placeholder="Optional short note">
+      </details>
+      <div class="bar"><button class="sec" id="btnReset">Reset to template</button><button class="sec" id="btnClear">Clear all fields</button></div>
+    </section>
+
+    <section class="panel" id="kb">
+      <h2>Knowledge base</h2>
+      <p class="lead">Add letters you like. The retriever indexes them, and in AI mode the best matches are sent as style samples.</p>
+      <label for="kbTitle">Title</label><input id="kbTitle" placeholder="e.g. My usual leave request">
+      <label for="kbText">Sample letter text</label><textarea id="kbText" rows="4"></textarea>
+      <div class="bar"><button class="sec" id="btnKbAdd">Add to knowledge base</button></div>
+      <ul class="list" id="kbList"></ul>
+    </section>
+
+    <section class="panel" id="drafts">
+      <h2>Drafts</h2>
+      <p class="lead">Saved on this device only.</p>
+      <div class="bar">
+        <button class="sec" id="btnSave">Save draft</button>
+        <button class="sec" id="btnExportAll">Export all</button>
+        <button class="sec" id="btnImport">Import</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+      <ul class="list" id="draftList"></ul>
+    </section>
+  </div>
+
+  <div class="col right">
+    <section class="panel" id="trace">
+      <h2>Agent constellation</h2>
+      <p class="lead" id="traceLead">Six agents hand the letter along. The last two review and lay it out.</p>
+      <div class="constellation" id="nodes" aria-live="polite"><div class="beam" id="beam"></div></div>
+      <ul class="log" id="log"></ul>
+    </section>
+
+    <section class="panel" id="blockB">
+      <h2>Block B: Live preview</h2>
+      <div class="meta" id="typo"></div>
+      <div class="bar" style="margin:0 0 10px"><label for="zoom" style="margin:0">Zoom</label><input type="range" id="zoom" min="0.8" max="1.4" step="0.05" value="1" style="max-width:180px"></div>
+      <div class="viewer"><div class="paper lh-classic" id="paper" aria-label="Letter preview"></div></div>
+    </section>
+
+    <section class="panel" id="blockC">
+      <h2>Block C: Full letter output</h2>
+      <textarea class="out" id="out" readonly aria-label="Letter text"></textarea>
+      <div class="bar">
+        <button class="btn" id="btnCopy">Copy</button>
+        <button class="sec" id="btnTxt">Download .txt</button>
+        <button class="sec" id="btnHtml">Download .html</button>
+        <button class="sec" id="btnDoc">Download .doc</button>
+        <button class="sec" id="btnPrint">Print or PDF</button>
+        <button class="sec" id="btnShare">Share</button>
+        <button class="sec" id="btnMail">Email</button>
+        <button class="sec" id="btnSpeak">Read aloud</button>
+        <button class="sec" id="btnReveal">Envelope reveal</button>
+        <button class="sec" id="btnLink">Copy share link</button>
+        <button class="sec" id="btnIcs">Reminder (.ics)</button>
+      </div>
+      <details class="fold" open>
+        <summary>Refine with the editor agent</summary>
+        <div class="bar">
+          <button class="sec" data-t="formalize">More formal</button>
+          <button class="sec" data-t="concise">More concise</button>
+          <button class="sec" data-t="warmer">Warmer</button>
+          <button class="sec" data-t="firmer">Firmer</button>
+        </div>
+        <label for="refine">Or tell the AI model what to change (needs an API key)</label>
+        <input id="refine" placeholder="e.g. Mention that I can start training my replacement">
+        <div class="bar"><button class="sec" id="btnRefine">Apply instruction</button></div>
+        <label for="transLang">Translate the letter (needs an API key)</label>
+        <div class="row"><input id="transLang" list="langs" placeholder="e.g. Telugu"><button class="sec" id="btnTrans">Translate</button></div>
+        <datalist id="langs"><option>Telugu</option><option>Hindi</option><option>Tamil</option><option>Malayalam</option><option>Kannada</option><option>Bengali</option><option>Spanish</option><option>French</option><option>German</option><option>Arabic</option><option>Japanese</option></datalist>
+      </details>
+    </section>
+
+    <section class="panel" id="quality">
+      <h2>Quality and sources</h2>
+      <div class="q">
+        <div class="ring"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="42"/><circle class="fg" id="ringFg" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"/></svg><div class="num" id="score">0</div></div>
+        <div><div id="reflect" style="font-size:13px;color:var(--mute)"></div><div class="chips" id="metrics"></div></div>
+      </div>
+      <div class="sub">Emotion radar</div>
+      <div id="emotion"></div>
+      <ul class="issues" id="issues"></ul>
+      <div class="sub">Retrieved conventions and samples</div>
+      <div id="retrieved"></div>
+      <div class="sub">Layout map</div>
+      <div id="bars"></div>
+    </section>
+
+    <section class="panel" id="lab">
+      <h2>Tone lab</h2>
+      <p class="lead">Runs your letter through every tone and ranks the results by review score. Tap Use to switch.</p>
+      <div class="bar"><button class="btn" id="btnLab">Compare all tones</button></div>
+      <div id="labOut"></div>
+    </section>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <h2 style="margin:0 0 4px;font-size:17px">Settings</h2>
+  <p class="lead" style="margin:0;color:var(--mute);font-size:13px">Optional. Add a key to let an AI model write the draft. Everything else works without one.</p>
+  <label for="provider">Provider</label>
+  <select id="provider"><option value="anthropic">Anthropic (Claude)</option><option value="groq">Groq (free tier)</option><option value="openai">OpenAI-compatible</option></select>
+  <label for="apiKey">API key</label><input id="apiKey" type="password" autocomplete="off" placeholder="Paste your key">
+  <label for="model">Claude model</label><input id="model">
+  <label for="gModel">Groq model</label><input id="gModel">
+  <label for="baseUrl">OpenAI-compatible endpoint</label><input id="baseUrl">
+  <label for="oModel">OpenAI-compatible model</label><input id="oModel">
+  <div class="row">
+    <div><label for="lang">Letter language</label><input id="lang" placeholder="English"></div>
+    <div><label for="length">Length</label><select id="length"><option value="short">Short</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select></div>
+  </div>
+  <label class="check" style="margin-top:12px"><input type="checkbox" id="remember"> Remember the key on this device</label>
+  <label class="check" style="margin-top:8px"><input type="checkbox" id="animate"> Animate the agents</label>
+  <p class="warn-txt">The key stays in your browser and is sent only to the provider you choose. On a shared or public computer, leave "remember" off. For a public app, route calls through your own server instead.</p>
+  <div class="bar"><button class="btn" id="btnSaveCfg">Save</button><button class="sec" id="btnClearKey">Forget key</button><button class="sec" id="btnCloseCfg">Close</button></div>
+</dialog>
+<dialog id="groqDlg">
+  <h2 style="margin:0 0 4px;font-size:17px">Add your free Groq key</h2>
+  <p style="margin:0;color:var(--mute);font-size:13px">Groq offers a free tier with fast Llama models and no credit card. Get a key, paste it here, and the agents will draft with it.</p>
+  <ol class="steps">
+    <li>Open <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> and sign in.</li>
+    <li>Choose <b>Create API key</b> and copy it (it starts with <code>gsk_</code>).</li>
+    <li>Paste it below, test it, and save.</li>
+  </ol>
+  <label for="gKey">Groq API key</label><input id="gKey" type="password" autocomplete="off" placeholder="gsk_...">
+  <label for="gModelPick">Model</label>
+  <select id="gModelPick"><option value="llama-3.3-70b-versatile">Llama 3.3 70B (best quality)</option><option value="llama-3.1-8b-instant">Llama 3.1 8B (fastest)</option><option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B</option></select>
+  <label class="check" style="margin-top:12px"><input type="checkbox" id="gRemember"> Remember the key on this device</label>
+  <div class="gstatus" id="gStatus"></div>
+  <div class="bar"><button class="btn" id="gSave">Save and use Groq</button><button class="sec" id="gTest">Test key</button><button class="sec" id="gClose">Close</button></div>
+  <p class="warn-txt">The key stays in your browser and goes only to Groq. Free-tier limits can change, so check console.groq.com for current limits. If a model name stops working, pick another one in Settings.</p>
+</dialog>
+
+<dialog id="palette">
+  <input id="palIn" placeholder="Type a command, for example: love letter, export, dark" aria-label="Command palette">
+  <ul class="list" id="palList"></ul>
+</dialog>
+
+<div id="reveal" class="reveal" hidden>
+  <button class="sec rclose" id="revClose">Close</button>
+  <div class="rstage" id="rstage">
+    <div class="hearts" id="hearts" aria-hidden="true"></div>
+    <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="Open the letter">
+      <div class="flap"></div><div class="pocket"></div>
+      <div class="tap" id="tapHint">Tap to open</div>
+    </div>
+    <div class="rpaper" id="rpaper"><div class="paper lh-classic" id="revPaper"></div></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="kb.js"></script>
+<script src="agents.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
