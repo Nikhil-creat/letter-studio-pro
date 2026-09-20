@@ -83,4 +83,15 @@ Claude and other OpenAI-compatible providers also work from **Settings**. Each p
 - **Old version still showing**: hard refresh, or bump `CACHE` in `sw.js`.
 - **AI draft fails**: check the key with **Test key**, the model name, and that the provider allows browser requests. The app falls back to the built-in template and tells you why.
 
+## Author
+
+**★NIKHIL CHARY SRIRAMOJU★**
+BTech CSE (Final Year)
+
+- GitHub: [Nikhil-creat](https://github.com/Nikhil-creat)
+- LinkedIn: [nikhil-chary-sriramoju](https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a)
+- Email: sriramojunikhil66@gmail.com
+- Instagram: [@nikhil__sriramoju](https://www.instagram.com/nikhil__sriramoju)
+- Facebook: [Profile](https://www.facebook.com/profile.php?id=100079201124141)
+
 Licensed for you to use, modify and share as you like.
