@@ -100,7 +100,7 @@
       if (b.paras) return b.paras.map(p => `<p>${ph(p)}</p>`).join("");
       const cls = ["blk", b.cls || "", b.bold ? "bold" : "", mod && b.right ? "mod" : ""].join(" ");
       const ls = b.lines.map((l, i) => (b.cls === "closing" && f.sig === "script" && i === 3) ? `<span class="sig">${esc(l)}</span>` : ph(l)).join("\n");
-      return `<div class="${cls}">${ls}</div>`;
+      return `<div class="${cls}"${b.right ? ' data-r="1"' : ""}>${ls}</div>`;
     }).join("");
   }
   function render(R) {
@@ -110,8 +110,14 @@
     const paper = $("paper");
     paper.className = "paper lh-" + f.lh;
     paper.style.fontFamily = `"${L.font}", ${["Calibri", "Arial"].includes(L.font) ? "Arial, sans-serif" : "Georgia, serif"}`;
-    paper.innerHTML = blocksHTML(R, f);
-    $("out").value = R.text;
+    if (st.custom) {
+      if (paper.innerHTML !== st.custom.html) { paper.innerHTML = st.custom.html; st.custom.html = paper.innerHTML; }
+      paper.querySelectorAll("[data-r]").forEach(e => e.classList.toggle("mod", f.layout === "mod"));
+      $("out").value = paperText();
+    } else {
+      paper.innerHTML = blocksHTML(R, f);
+      $("out").value = R.text;
+    }
     $("engineChip").textContent = R.llmUsed ? "AI model drafting" : "Offline agents";
     $("engineChip").className = "engine" + (R.llmUsed ? " llm" : "");
 
@@ -138,6 +144,7 @@
     $("issues").innerHTML = all.length ? all.map(i => `<li><span class="dot ${i.sev}"></span><span>${esc(i.msg)}</span></li>`).join("") : '<li><span class="dot info"></span><span>No issues found.</span></li>';
     $("retrieved").innerHTML = (R.retrieved || []).map(r => `<div class="src"><span>${esc(r.title)} <span class="chip">${r.kind === "sample" ? "your sample" : "convention"}</span></span><div class="meter"><i style="width:${Math.min(100, Math.round(r.score * 100))}%"></i></div></div>`).join("") || '<div class="chip">Nothing relevant</div>';
     const mx = Math.max(...L.bars.map(b => b.w), 1);
+    if (st.custom) liveMetrics(R);
     $("bars").innerHTML = L.bars.map(b => `<div class="src"><span>${b.k}</span><div class="meter"><i style="width:${Math.max(4, Math.round((b.w / mx) * 100))}%"></i></div></div>`).join("");
   }
   const applyZoom = () => $("paper").style.setProperty("--z", $("zoom").value);
@@ -151,6 +158,7 @@
     if (!FIELDS.includes(id)) return;
     if (id === "engine") updateEngineUI();
     if (id === "sub") syncLoveUI();
+    if (st.custom && !["lh", "font", "layout", "sig"].includes(id) && !st.customToast) { st.customToast = true; toast("Your hand edits are kept. Press Regenerate to apply field changes."); }
     const f = collect();
     if (f.engine === "llm" || !st.pristine) {
       if (STRUCTURAL.has(id) && id !== "engine" && st.paras && (f.engine === "llm" || !st.pristine)) { $("hint").textContent = "Fields changed after the AI draft. Press Run agents to redraft, or keep editing to keep this draft."; $("hint").classList.add("show"); }
@@ -167,11 +175,80 @@
   document.addEventListener("change", onInput);
 
   $("btnRun").addEventListener("click", () => { st.pristine = true; run({}); });
-  $("btnReset").addEventListener("click", () => { st.pristine = true; st.paras = null; st.wasLLM = false; run({ fast: true }); toast("Reset to the template draft."); });
+  $("btnReset").addEventListener("click", () => { setCustom(null); st.pristine = true; st.paras = null; st.wasLLM = false; run({ fast: true }); toast("Reset to the template draft."); });
   $("btnClear").addEventListener("click", () => {
     ["sName", "sTitle", "sContact", "sAddr", "rName", "rOrg", "rAddr", "subj", "details", "encl", "cc", "ps", "prompt"].forEach(id => { $(id).value = ""; });
-    st.pristine = true; st.paras = null; st.wasLLM = false; run({ fast: true });
+    setCustom(null); st.pristine = true; st.paras = null; st.wasLLM = false; run({ fast: true });
   });
+
+  /* ---------- hand editing ---------- */
+  const ALLOWED = { P: 1, DIV: 1, BR: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, SPAN: 1 };
+  const OKCLS = new Set(["blk", "mod", "bold", "sender", "closing", "sig", "ph"]);
+  // Rebuilds HTML from an untrusted source (link, backup file, storage) keeping only safe tags and classes.
+  function sanitize(html) {
+    const t = document.createElement("template"); t.innerHTML = String(html || "");
+    const walk = n => {
+      let out = "";
+      n.childNodes.forEach(c => {
+        if (c.nodeType === 3) { out += esc(c.nodeValue); return; }
+        if (c.nodeType !== 1) return;
+        const tag = c.tagName;
+        if (tag === "BR") { out += "<br>"; return; }
+        if (!ALLOWED[tag]) { out += walk(c); return; }
+        const cls = (c.getAttribute("class") || "").split(/\s+/).filter(x => OKCLS.has(x)).join(" ");
+        const attrs = (cls ? ` class="${cls}"` : "") + (c.hasAttribute("data-r") ? ' data-r="1"' : "");
+        out += `<${tag.toLowerCase()}${attrs}>${walk(c)}</${tag.toLowerCase()}>`;
+      });
+      return out;
+    };
+    return walk(t.content);
+  }
+  function paperText() {
+    const out = [];
+    $("paper").childNodes.forEach(n => {
+      let t = "";
+      if (n.nodeType === 3) t = n.nodeValue;
+      else if (n.nodeType === 1) t = n.innerText !== undefined ? n.innerText : n.textContent;
+      t = t.replace(/\u00a0/g, " ").replace(/\n+$/, "");
+      if (t.trim() !== "") out.push(t);
+    });
+    return out.join("\n\n");
+  }
+  const getText = () => (st.custom ? paperText() : (st.R ? st.R.text : ""));
+  const getBodyHTML = () => $("paper").innerHTML.replace(/<span class="ph">([^<]*)<\/span>/g, "$1");
+  function setCustom(html) { st.custom = html ? { html: sanitize(html) } : null; $("editChip").hidden = !st.custom; }
+  function liveMetrics(R) {
+    const text = paperText(), m = A.readability(text), wc = (text.match(/\S+/g) || []).length;
+    const pages = Math.max(1, Math.ceil(wc / 450));
+    $("metrics").innerHTML = [["Words", wc], ["Readability", m.flesch], ["Avg sentence", m.avgSentence], ["Pages", pages], ["Balance", R.layout.balance + "%"], ["Tone", TONES[R.f.tone].label]]
+      .map(([k, v]) => `<span class="chip">${k} <b>${esc(v)}</b></span>`).join("");
+    const E = A.emotion(text);
+    $("emotion").innerHTML = [["Warmth", E.warmth], ["Formality", E.formality], ["Urgency", E.urgency], ["Confidence", E.confidence]]
+      .map(([k, v]) => `<div class="emo"><span>${k}</span><div class="meter"><i style="width:${v}%"></i></div><span>${v}</span></div>`).join("");
+    $("reflect").textContent = "You edited this letter by hand. Words, readability and emotion are live. The score and issues below are for the generated draft.";
+  }
+  let svt;
+  $("paper").addEventListener("input", () => {
+    st.custom = { html: $("paper").innerHTML }; $("editChip").hidden = false;
+    $("out").value = paperText();
+    if (st.R) liveMetrics(st.R);
+    clearTimeout(svt); svt = setTimeout(saveSession, 600);
+  });
+  $("paper").addEventListener("paste", e => {
+    e.preventDefault();
+    const t = (e.clipboardData || window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, t);
+  });
+  document.querySelectorAll("#editBar [data-cmd]").forEach(b => {
+    b.addEventListener("mousedown", e => e.preventDefault());
+    b.addEventListener("click", () => { $("paper").focus(); document.execCommand(b.dataset.cmd); });
+  });
+  $("btnRegen").addEventListener("click", () => {
+    if (!st.custom) { toast("Nothing to discard. The letter is already generated from your fields."); return; }
+    st.customToast = false; setCustom(null); toast("Hand edits discarded. Letter rebuilt from your fields.");
+    run({ fast: true, skipDraft: !!st.paras && !st.pristine });
+  });
+  const guardEdits = () => { if (st.custom) { toast("You edited the letter by hand. Press Regenerate first, then use this."); return true; } return false; };
 
   /* ---------- export ---------- */
   const fileBase = () => (st.R ? st.R.type.id : "letter") + "-letter";
@@ -184,30 +261,30 @@
   function standaloneHTML() {
     const f = collect();
     const font = st.R.layout.font;
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(st.R.subj || st.R.type.label)}</title><style>body{font-family:"${font}",Georgia,serif;font-size:12pt;line-height:1.15;max-width:680px;margin:40px auto;padding:0 24px;color:#111}.blk{margin-bottom:14px;white-space:pre-wrap}.mod{margin-left:46%}.bold{font-weight:700}p{margin:0 0 10px}.sig{font-family:"Segoe Script","Brush Script MT",cursive;font-size:1.7em}</style></head><body>${blocksHTML(st.R, f)}</body></html>`;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(st.R.subj || st.R.type.label)}</title><style>body{font-family:"${font}",Georgia,serif;font-size:12pt;line-height:1.15;max-width:680px;margin:40px auto;padding:0 24px;color:#111}.blk{margin-bottom:14px;white-space:pre-wrap}.mod{margin-left:46%}.bold{font-weight:700}p{margin:0 0 10px}.sig{font-family:"Segoe Script","Brush Script MT",cursive;font-size:1.7em}b,strong{font-weight:700}i,em{font-style:italic}u{text-decoration:underline}</style></head><body>${getBodyHTML()}</body></html>`;
   }
   $("btnCopy").addEventListener("click", async () => {
     if (!st.R) return;
-    try { await navigator.clipboard.writeText(st.R.text); toast("Letter copied."); }
+    try { await navigator.clipboard.writeText(getText()); toast("Letter copied."); }
     catch (e) { $("out").focus(); $("out").select(); try { document.execCommand("copy"); toast("Letter copied."); } catch (e2) { toast("Select the text and copy it manually."); } }
   });
-  $("btnTxt").addEventListener("click", () => st.R && download(fileBase() + ".txt", "text/plain", st.R.text));
+  $("btnTxt").addEventListener("click", () => st.R && download(fileBase() + ".txt", "text/plain", getText()));
   $("btnHtml").addEventListener("click", () => st.R && download(fileBase() + ".html", "text/html", standaloneHTML()));
   $("btnDoc").addEventListener("click", () => st.R && download(fileBase() + ".doc", "application/msword", standaloneHTML()));
   $("btnPrint").addEventListener("click", () => window.print());
   $("btnShare").addEventListener("click", async () => {
     if (!st.R) return;
-    if (navigator.share) { try { await navigator.share({ title: st.R.subj || st.R.type.label, text: st.R.text }); } catch (e) { /* cancelled */ } }
+    if (navigator.share) { try { await navigator.share({ title: st.R.subj || st.R.type.label, text: getText() }); } catch (e) { /* cancelled */ } }
     else toast("Sharing is not supported here. Use Copy instead.");
   });
   $("btnMail").addEventListener("click", () => {
     if (!st.R) return;
-    location.href = "mailto:?subject=" + encodeURIComponent(st.R.subj || st.R.type.label) + "&body=" + encodeURIComponent(st.R.text);
+    location.href = "mailto:?subject=" + encodeURIComponent(st.R.subj || st.R.type.label) + "&body=" + encodeURIComponent(getText());
   });
   $("btnSpeak").addEventListener("click", () => {
     if (!("speechSynthesis" in window) || !st.R) { toast("Read aloud is not supported in this browser."); return; }
     if (speechSynthesis.speaking) { speechSynthesis.cancel(); $("btnSpeak").textContent = "Read aloud"; return; }
-    const u = new SpeechSynthesisUtterance(st.R.paras.join(" "));
+    const u = new SpeechSynthesisUtterance(getText());
     u.onend = () => { $("btnSpeak").textContent = "Read aloud"; };
     $("btnSpeak").textContent = "Stop reading";
     speechSynthesis.speak(u);
@@ -229,13 +306,13 @@
 
   /* ---------- refine ---------- */
   document.querySelectorAll("[data-t]").forEach(b => b.addEventListener("click", () => {
-    if (!st.paras) return;
+    if (!st.paras || guardEdits()) return;
     st.paras = A.transforms[b.dataset.t](st.paras); st.pristine = false;
     run({ fast: true, skipDraft: true }); toast("Applied: " + b.textContent.toLowerCase());
   }));
   $("btnRefine").addEventListener("click", async () => {
     const ins = $("refine").value.trim();
-    if (!ins || !st.paras) return;
+    if (!ins || !st.paras || guardEdits()) return;
     if (!getKey()) { toast("Add an API key in settings to use AI edits."); $("dlg").showModal(); return; }
     $("btnRefine").disabled = true;
     try {
@@ -270,7 +347,7 @@
   function saveDraft() {
     if (!st.R) return;
     const f = collect(); const ds = store.get("drafts", []);
-    ds.unshift({ id: "d" + Date.now(), name: `${st.R.type.label}${f.rName ? " to " + f.rName : ""} (${new Date().toLocaleDateString()})`, f, paras: st.paras, subj: st.subj, pristine: st.pristine, wasLLM: st.wasLLM });
+    ds.unshift({ id: "d" + Date.now(), name: `${st.R.type.label}${f.rName ? " to " + f.rName : ""} (${new Date().toLocaleDateString()})`, f, paras: st.paras, subj: st.subj, pristine: st.pristine, wasLLM: st.wasLLM, custom: st.custom ? st.custom.html : null });
     store.set("drafts", ds.slice(0, 40)); renderDrafts(); toast("Draft saved on this device.");
   }
   $("btnSave").addEventListener("click", saveDraft);
@@ -278,8 +355,8 @@
     const ds = store.get("drafts", []);
     if (e.target.dataset.load) {
       const d = ds.find(x => x.id === e.target.dataset.load); if (!d) return;
-      apply(d.f); st.paras = d.paras; st.subj = d.subj; st.pristine = d.pristine; st.wasLLM = d.wasLLM;
-      run({ fast: true, skipDraft: !d.pristine }); toast("Draft loaded."); location.hash = "#blockB";
+      apply(d.f); st.paras = d.paras; st.subj = d.subj; st.pristine = d.pristine; st.wasLLM = d.wasLLM; setCustom(d.custom);
+      run({ fast: true, skipDraft: !d.pristine || !!st.custom }); toast("Draft loaded."); location.hash = "#blockB";
     } else if (e.target.dataset.rm) { store.set("drafts", ds.filter(x => x.id !== e.target.dataset.rm)); renderDrafts(); }
   });
   $("btnExportAll").addEventListener("click", () => download("letter-studio-backup.json", "application/json", JSON.stringify({ drafts: store.get("drafts", []), kb: store.get("kb", []) }, null, 2)));
@@ -403,7 +480,7 @@
 
   /* ---------- translate ---------- */
   $("btnTrans").addEventListener("click", async () => {
-    const lang = $("transLang").value.trim(); if (!lang || !st.paras) return;
+    const lang = $("transLang").value.trim(); if (!lang || !st.paras || guardEdits()) return;
     if (!getKey()) { toast("Add an API key first. Groq is free."); openGroq(); return; }
     $("btnTrans").disabled = true;
     try {
@@ -419,7 +496,7 @@
   const dec = t => JSON.parse(decodeURIComponent(escape(atob(t))));
   $("btnLink").addEventListener("click", async () => {
     if (!st.R) return;
-    const link = location.href.split("#")[0] + "#s=" + encodeURIComponent(enc({ f: collect(), paras: st.paras, subj: st.subj })) + (st.R.type.love ? "&reveal=1" : "");
+    const link = location.href.split("#")[0] + "#s=" + encodeURIComponent(enc({ f: collect(), paras: st.paras, subj: st.subj, custom: st.custom ? st.custom.html : null })) + (st.R.type.love ? "&reveal=1" : "");
     try { await navigator.clipboard.writeText(link); toast(link.length > 6000 ? "Link copied, but it is long. Some apps may cut it off." : "Link copied. The letter travels inside the link itself."); }
     catch (e) { window.prompt("Copy this link", link); }
   });
@@ -427,16 +504,16 @@
     const m = location.hash.match(/#s=([^&]+)/); if (!m) return false;
     try {
       const o = dec(decodeURIComponent(m[1]));
-      apply({ ...o.f, engine: "auto" }); st.paras = o.paras; st.subj = o.subj || ""; st.pristine = false; st.lastLove = isLoveType();
+      apply({ ...o.f, engine: "auto" }); st.paras = o.paras; st.subj = o.subj || ""; st.pristine = false; st.lastLove = isLoveType(); setCustom(o.custom);
       const reveal = /reveal=1/.test(location.hash);
       run({ fast: true, skipDraft: true }).then(() => { if (reveal) openReveal(); });
       return true;
     } catch (e) { return false; }
   }
-  function saveSession() { store.set("session", { f: collect(), paras: st.paras, subj: st.subj, pristine: st.pristine, wasLLM: st.wasLLM }); }
+  function saveSession() { store.set("session", { f: collect(), paras: st.paras, subj: st.subj, pristine: st.pristine, wasLLM: st.wasLLM, custom: st.custom ? st.custom.html : null }); }
   function restoreSession() {
     const s = store.get("session", null); if (!s || !s.f) return false;
-    apply(s.f); st.paras = s.paras; st.subj = s.subj || ""; st.pristine = s.pristine !== false; st.wasLLM = !!s.wasLLM; st.lastLove = isLoveType();
+    apply(s.f); st.paras = s.paras; st.subj = s.subj || ""; st.pristine = s.pristine !== false; st.wasLLM = !!s.wasLLM; st.lastLove = isLoveType(); setCustom(s.custom);
     return true;
   }
 
@@ -484,7 +561,7 @@
     const base = [["Run agents", () => { st.pristine = true; run({}); }], ["Compare all tones", () => $("btnLab").click()], ["Copy letter", () => $("btnCopy").click()],
       ["Download .txt", () => $("btnTxt").click()], ["Print or PDF", () => $("btnPrint").click()], ["Envelope reveal", () => $("btnReveal").click()],
       ["Copy share link", () => $("btnLink").click()], ["Save draft", saveDraft], ["Add Groq key", openGroq], ["Open settings", () => $("btnSettings").click()],
-      ["Switch theme", () => $("btnTheme").click()], ["Focus request box", () => $("prompt").focus()]];
+      ["Switch theme", () => $("btnTheme").click()], ["About the developer", () => { location.hash = "#about"; }], ["Focus request box", () => $("prompt").focus()]];
     const types = TYPES.map(t => ["Write a " + t.label.toLowerCase(), () => { $("sub").value = t.id; $("autoType").checked = false; $("sub").dispatchEvent(new Event("change", { bubbles: true })); location.hash = "#blockA"; }]);
     return base.concat(types);
   }
@@ -505,6 +582,16 @@
   });
   $("palList").addEventListener("click", e => { const li = e.target.closest("li"); if (li && li.dataset.i) runPal(+li.dataset.i); });
   $("btnPalette").addEventListener("click", openPalette);
+
+  /* ---------- mobile tab bar, footer year ---------- */
+  $("year").textContent = new Date().getFullYear();
+  if ("IntersectionObserver" in window) {
+    const tabs = [...document.querySelectorAll("#tabbar a")];
+    const io = new IntersectionObserver(es => {
+      es.forEach(en => { if (en.isIntersecting) tabs.forEach(t => t.classList.toggle("on", t.dataset.s === en.target.id)); });
+    }, { rootMargin: "-35% 0px -55% 0px" });
+    tabs.forEach(t => { const el = document.getElementById(t.dataset.s); if (el) io.observe(el); });
+  }
 
   /* ---------- init ---------- */
   renderKB(); renderDrafts(); applyZoom(); updateEngineUI(); updateGroqBtn();

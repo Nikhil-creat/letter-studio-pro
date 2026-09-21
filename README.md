@@ -6,6 +6,7 @@ An agentic letter writer that runs entirely in the browser. Six agents hand your
 
 - **Six agents**: Intent (picks the letter type from your plain-words request and fills recipient details), Retrieve (TF-IDF search over built-in conventions and your own sample letters), Draft (built-in templates, or an AI model with your own key), Comply (privacy and legal advisories, plus a check for numbers the model invented), Critic (scores the letter and fixes what it can in a self-review loop), Layout (page fill, balance, fonts).
 - **28 letter types** across corporate, academic, legal/official, personal and love categories, with six tones.
+- **Edit the letter right on the page**: tap the preview and type. Bold, italic, underline, undo and redo are built in. Your edits flow into Copy, .txt, .html, .doc, print, share links, drafts and the envelope reveal. Press **Regenerate** to discard hand edits and rebuild from the fields.
 - **Live preview** with four letterhead styles, full or modified block layout, zoom and a script signature.
 - **Export**: copy, .txt, .html, .doc, print or PDF, share sheet, email, read aloud.
 - **Love letters**: love letter, anniversary, missing you and marriage proposal types with a "Lovable words" panel. Tap the feelings you want (your smile, feels like home, forever, and more), add a pet name, choose how gentle or passionate to sound, and add "I love you" in Hindi, Telugu, Tamil, Malayalam, Bengali, Urdu, Spanish, French, Italian or Japanese. A rose letterhead and script signature are applied automatically.
@@ -24,6 +25,7 @@ app.js         interface logic
 sw.js          offline cache
 manifest.json  install-as-app settings
 icon.svg       app icon
+LICENSE        MIT license
 ```
 
 All files sit in one flat folder, so uploading is simple.
@@ -33,7 +35,7 @@ All files sit in one flat folder, so uploading is simple.
 1. Sign in at github.com. On a phone, open it in your browser and switch to "Desktop site" if the upload button is missing.
 2. Tap **+ > New repository**. Name it, for example, `letter-studio-pro`. Set it to **Public**. Tap **Create repository**.
 3. On the new repository page choose **uploading an existing file** (or **Add file > Upload files**).
-4. Select all the project files (`index.html`, `style.css`, `kb.js`, `agents.js`, `app.js`, `sw.js`, `manifest.json`, `icon.svg`, `README.md`). If you have the .zip, extract it first because GitHub does not unzip uploads.
+4. Select all the project files (`index.html`, `style.css`, `kb.js`, `agents.js`, `app.js`, `sw.js`, `manifest.json`, `icon.svg`, `README.md`, `LICENSE`). If you have the .zip, extract it first because GitHub does not unzip uploads.
 5. `index.html` must be at the top level of the repository, not inside a subfolder. Tap **Commit changes**.
 6. Go to **Settings > Pages**. Under **Build and deployment**, set **Source** to **Deploy from a branch**, **Branch** to `main`, folder `/ (root)`, then **Save**.
 7. Wait one to two minutes and refresh the Pages screen. It shows your address:
@@ -83,15 +85,22 @@ Claude and other OpenAI-compatible providers also work from **Settings**. Each p
 - **Old version still showing**: hard refresh, or bump `CACHE` in `sw.js`.
 - **AI draft fails**: check the key with **Test key**, the model name, and that the provider allows browser requests. The app falls back to the built-in template and tells you why.
 
+## Layouts
+
+The page adapts to the device automatically:
+
+- **Phone**: one column with a bottom tab bar (Request, Details, Preview, Output, Agents), large touch targets, and pop-ups that slide up as sheets.
+- **Tablet**: one wider column with a section bar at the top.
+- **Desktop**: inputs on the left, preview and output on the right.
+- **Wide desktop**: three columns, with the live preview staying in view while you type.
+
 ## Author
 
-**★NIKHIL CHARY SRIRAMOJU★**
-BTech CSE (Final Year)
+Designed and developed by **NIKHIL CHARY SRIRAMOJU**, B.Tech, Computer Science and Engineering.
 
-- GitHub: [Nikhil-creat](https://github.com/Nikhil-creat)
-- LinkedIn: [nikhil-chary-sriramoju](https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a)
-- Email: sriramojunikhil66@gmail.com
-- Instagram: [@nikhil__sriramoju](https://www.instagram.com/nikhil__sriramoju)
-- Facebook: [Profile](https://www.facebook.com/profile.php?id=100079201124141)
+- GitHub: https://github.com/Nikhil-creat
+- LinkedIn: https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a
+- Gmail: sriramojunikhil66@gmail.com
+- Instagram: https://www.instagram.com/nikhil__sriramoju
 
-Licensed for you to use, modify and share as you like.
+Released under the MIT license (see `LICENSE`).

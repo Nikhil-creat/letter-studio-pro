@@ -1,5 +1,5 @@
 /* Offline cache for Letter Studio Pro. Bump CACHE when you change any file. */
-const CACHE = "letter-studio-pro-v2";
+const CACHE = "letter-studio-pro-v4";
 const FILES = ["./", "index.html", "style.css", "kb.js", "agents.js", "app.js", "manifest.json", "icon.svg"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {

@@ -6,6 +6,12 @@
 <title>Letter Studio Pro: agentic letter writer</title>
 <meta name="description" content="A multi-agent letter generator with retrieval, self-review, live preview and export. Runs in your browser.">
 <meta name="theme-color" content="#0b1020">
+<meta name="author" content="Nikhil Chary Sriramoju">
+<meta name="color-scheme" content="dark light">
+<meta property="og:title" content="Letter Studio Pro: agentic letter writer">
+<meta property="og:description" content="Multi-agent letter generator with love letters, live preview, Groq AI drafting and export. Designed and developed by Nikhil Chary Sriramoju.">
+<meta property="og:type" content="website">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Letter Studio Pro","applicationCategory":"ProductivityApplication","operatingSystem":"Any","author":{"@type":"Person","name":"Nikhil Chary Sriramoju","email":"sriramojunikhil66@gmail.com","sameAs":["https://github.com/Nikhil-creat","https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a","https://www.instagram.com/nikhil__sriramoju"]}}</script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
@@ -14,7 +20,7 @@
 <header class="top">
   <div class="brand">
     <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="6" width="28" height="20" rx="4" fill="none" stroke="#5b7cff" stroke-width="2.4"/><path d="M4 9l12 9 12-9" fill="none" stroke="#37e6b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>Letter Studio Pro <small>agentic</small></span>
+    <span>Letter Studio Pro <small class="by">by Nikhil Chary Sriramoju</small></span>
   </div>
   <span class="spacer"></span>
   <span class="engine" id="engineChip">Offline agents</span>
@@ -125,23 +131,27 @@
     </section>
   </div>
 
-  <div class="col right">
-    <section class="panel" id="trace">
-      <h2>Agent constellation</h2>
-      <p class="lead" id="traceLead">Six agents hand the letter along. The last two review and lay it out.</p>
-      <div class="constellation" id="nodes" aria-live="polite"><div class="beam" id="beam"></div></div>
-      <ul class="log" id="log"></ul>
-    </section>
-
+  <div class="col mid">
     <section class="panel" id="blockB">
       <h2>Block B: Live preview</h2>
+      <p class="lead" style="margin:0 0 8px">Tap the letter to edit it directly. Every change carries into Copy, .txt, .html, .doc, print and share.</p>
+      <div class="editbar" id="editBar">
+        <button type="button" class="sec" data-cmd="bold" title="Bold" aria-label="Bold"><b>B</b></button>
+        <button type="button" class="sec" data-cmd="italic" title="Italic" aria-label="Italic"><i>I</i></button>
+        <button type="button" class="sec" data-cmd="underline" title="Underline" aria-label="Underline"><u>U</u></button>
+        <button type="button" class="sec" data-cmd="undo" title="Undo">Undo</button>
+        <button type="button" class="sec" data-cmd="redo" title="Redo">Redo</button>
+        <button type="button" class="sec" id="btnRegen" title="Rebuild the letter from your fields and discard hand edits">Regenerate</button>
+        <span class="chip editchip" id="editChip" hidden>Edited by hand. Field changes will not overwrite it.</span>
+      </div>
       <div class="meta" id="typo"></div>
       <div class="bar" style="margin:0 0 10px"><label for="zoom" style="margin:0">Zoom</label><input type="range" id="zoom" min="0.8" max="1.4" step="0.05" value="1" style="max-width:180px"></div>
-      <div class="viewer"><div class="paper lh-classic" id="paper" aria-label="Letter preview"></div></div>
+      <div class="viewer"><div class="paper lh-classic" id="paper" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Letter editor"></div></div>
     </section>
 
     <section class="panel" id="blockC">
       <h2>Block C: Full letter output</h2>
+      <p class="lead" style="margin:0 0 8px">Plain-text version. It updates live as you edit the letter above.</p>
       <textarea class="out" id="out" readonly aria-label="Letter text"></textarea>
       <div class="bar">
         <button class="btn" id="btnCopy">Copy</button>
@@ -171,6 +181,15 @@
         <div class="row"><input id="transLang" list="langs" placeholder="e.g. Telugu"><button class="sec" id="btnTrans">Translate</button></div>
         <datalist id="langs"><option>Telugu</option><option>Hindi</option><option>Tamil</option><option>Malayalam</option><option>Kannada</option><option>Bengali</option><option>Spanish</option><option>French</option><option>German</option><option>Arabic</option><option>Japanese</option></datalist>
       </details>
+    </section>
+  </div>
+
+  <div class="col right">
+    <section class="panel" id="trace">
+      <h2>Agent constellation</h2>
+      <p class="lead" id="traceLead">Six agents hand the letter along. The last two review and lay it out.</p>
+      <div class="constellation" id="nodes" aria-live="polite"><div class="beam" id="beam"></div></div>
+      <ul class="log" id="log"></ul>
     </section>
 
     <section class="panel" id="quality">
@@ -216,6 +235,30 @@
   <p class="warn-txt">The key stays in your browser and is sent only to the provider you choose. On a shared or public computer, leave "remember" off. For a public app, route calls through your own server instead.</p>
   <div class="bar"><button class="btn" id="btnSaveCfg">Save</button><button class="sec" id="btnClearKey">Forget key</button><button class="sec" id="btnCloseCfg">Close</button></div>
 </dialog>
+<footer class="credit" id="about">
+  <div class="credit-in">
+    <div class="cname">Designed and developed by <strong>NIKHIL CHARY SRIRAMOJU</strong></div>
+    <div class="crole">B.Tech, Computer Science and Engineering</div>
+    <div class="clinks">
+      <a href="https://github.com/Nikhil-creat" target="_blank" rel="noopener me">GitHub</a>
+      <a href="https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a" target="_blank" rel="noopener me">LinkedIn</a>
+      <a href="mailto:sriramojunikhil66@gmail.com">Gmail</a>
+      <a href="https://www.instagram.com/nikhil__sriramoju" target="_blank" rel="noopener me">Instagram</a>
+    </div>
+    <p class="cnote">Found a bug or want a feature? Email me or <a href="https://github.com/Nikhil-creat/letter-studio-pro/issues" target="_blank" rel="noopener">open an issue on GitHub</a>. The source code is at <a href="https://github.com/Nikhil-creat/letter-studio-pro" target="_blank" rel="noopener">github.com/Nikhil-creat/letter-studio-pro</a>.</p>
+    <p class="cnote">Privacy: everything runs in your browser. Your letters, drafts and API keys stay on your device and are never sent to this site. If you use AI drafting, the text of your request goes to the provider you choose (Groq, Claude or another).</p>
+    <p class="ccopy">&copy; <span id="year">2026</span> Nikhil Chary Sriramoju. Free to use and share under the MIT license.</p>
+  </div>
+</footer>
+
+<nav class="tabbar" id="tabbar" aria-label="Sections">
+  <a href="#cmd" data-s="cmd"><i>&#9998;</i><span>Request</span></a>
+  <a href="#blockA" data-s="blockA"><i>&#9776;</i><span>Details</span></a>
+  <a href="#blockB" data-s="blockB"><i>&#9633;</i><span>Preview</span></a>
+  <a href="#blockC" data-s="blockC"><i>&#10148;</i><span>Output</span></a>
+  <a href="#trace" data-s="trace"><i>&#9678;</i><span>Agents</span></a>
+</nav>
+
 <dialog id="groqDlg">
   <h2 style="margin:0 0 4px;font-size:17px">Add your free Groq key</h2>
   <p style="margin:0;color:var(--mute);font-size:13px">Groq offers a free tier with fast Llama models and no credit card. Get a key, paste it here, and the agents will draft with it.</p>
