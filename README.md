@@ -2,6 +2,16 @@
 
 An agentic letter writer that runs entirely in the browser. Six agents hand your letter along, review it, and lay it out. No build step, no server, no dependencies.
 
+## Author
+Designed and developed by 
+# **NIKHIL CHARY SRIRAMOJU**
+B.Tech, Computer Science and Engineering.
+
+- GitHub: https://github.com/Nikhil-creat
+- LinkedIn: https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a
+- Gmail: sriramojunikhil66@gmail.com
+- Instagram: https://www.instagram.com/nikhil__sriramoju
+  
 ## What it does
 
 - **Six agents**: Intent (picks the letter type from your plain-words request and fills recipient details), Retrieve (TF-IDF search over built-in conventions and your own sample letters), Draft (built-in templates, or an AI model with your own key), Comply (privacy and legal advisories, plus a check for numbers the model invented), Critic (scores the letter and fixes what it can in a self-review loop), Layout (page fill, balance, fonts).
@@ -93,14 +103,6 @@ The page adapts to the device automatically:
 - **Tablet**: one wider column with a section bar at the top.
 - **Desktop**: inputs on the left, preview and output on the right.
 - **Wide desktop**: three columns, with the live preview staying in view while you type.
-
-## Author
-
-Designed and developed by **NIKHIL CHARY SRIRAMOJU**, B.Tech, Computer Science and Engineering.
-
-- GitHub: https://github.com/Nikhil-creat
-- LinkedIn: https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a
-- Gmail: sriramojunikhil66@gmail.com
-- Instagram: https://www.instagram.com/nikhil__sriramoju
+- 
 
 Released under the MIT license (see `LICENSE`).
